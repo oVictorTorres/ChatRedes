@@ -124,6 +124,24 @@ def handle_client(conn, addr):
                         finally:
                             if conn_db:
                                 conn_db.close()
+
+            elif command == "TYPING" and len(parts) == 2:
+                receiver = parts[1]
+                # Envia o evento de digitação para o destinatário se ele estiver online
+                with online_users_lock:
+                    if receiver in online_users:
+                        recipient_conn = online_users[receiver]
+                        recipient_conn.sendall(f"TYPING|{current_username}".encode('utf-8'))
+                        print(f"Indicador 'digitando...' de {current_username} para {receiver}")
+
+            elif command == "TYPING_STOP" and len(parts) == 2:
+                receiver = parts[1]
+                # Envia o evento de parada de digitação para o destinatário
+                with online_users_lock:
+                    if receiver in online_users:
+                        recipient_conn = online_users[receiver]
+                        recipient_conn.sendall(f"TYPING_STOP|{current_username}".encode('utf-8'))
+                        print(f"Indicador 'digitando...' de {current_username} encerrado para {receiver}")
             
     except (socket.error, sqlite3.Error) as e:
         print(f"Erro com o cliente {addr}: {e}")
